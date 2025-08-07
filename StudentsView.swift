@@ -8,9 +8,13 @@ struct StudentsView: View {
     var body: some View {
         NavigationView {
             VStack {
-                studentList // استخدام الواجهة الفرعية للقائمة
+                // القائمة الآن تستخدم الواجهة الفرعية الجديدة
+                List {
+                    ForEach(dataStore.sections) { section in
+                        StudentListSection(section: section)
+                    }
+                }
 
-                // استخدام الواجهة الفرعية للنموذج
                 AddStudentForm(
                     newStudentName: $newStudentName,
                     selectedSectionID: $selectedSectionID
@@ -18,35 +22,41 @@ struct StudentsView: View {
             }
             .navigationTitle("الطلاب")
             .onAppear {
-                // تحديد القيمة الافتراضية للـ picker عند ظهور الواجهة
                 if selectedSectionID == nil {
                     selectedSectionID = dataStore.sections.first?.id
                 }
             }
         }
     }
+}
 
-    // تم استخراج قائمة الطلاب إلى متغير منفصل لزيادة الوضوح
-    private var studentList: some View {
-        List {
-            ForEach(dataStore.sections) { section in
-                Section(header: Text(section.name)) {
-                    let studentsInSection = dataStore.students.filter { $0.sectionID == section.id }
-                    if studentsInSection.isEmpty {
-                        Text("لا يوجد طلاب في هذه الشعبة بعد").foregroundColor(.gray)
-                    } else {
-                        ForEach(studentsInSection) { student in
-                            Text(student.name)
-                        }
-                    }
+// --- واجهة فرعية: قسم عرض الطلاب ---
+// تم إنشاء هذه الواجهة لحل مشكلة "Extra argument in call"
+// عن طريق فصل منطق عرض الطلاب في قسم خاص
+struct StudentListSection: View {
+    @EnvironmentObject var dataStore: AppDataStore
+    let section: Section
+
+    // نقوم بحساب الطلاب هنا بدلاً من داخل جسم الواجهة مباشرة
+    private var studentsInSection: [Student] {
+        dataStore.students.filter { $0.sectionID == section.id }
+    }
+
+    var body: some View {
+        Section(header: Text(section.name)) {
+            if studentsInSection.isEmpty {
+                Text("لا يوجد طلاب في هذه الشعبة بعد").foregroundColor(.gray)
+            } else {
+                ForEach(studentsInSection) { student in
+                    Text(student.name)
                 }
             }
         }
     }
 }
 
+
 // --- واجهة فرعية: نموذج إضافة طالب ---
-// تم فصل النموذج لتبسيط الكود وتجنب أخطاء الـ compiler
 struct AddStudentForm: View {
     @EnvironmentObject var dataStore: AppDataStore
     @Binding var newStudentName: String
@@ -87,14 +97,13 @@ struct AddStudentForm: View {
     private func addStudent() {
         guard let sectionID = selectedSectionID else { return }
         dataStore.addStudent(name: newStudentName, sectionID: sectionID)
-        newStudentName = "" // تفريغ الحقل
+        newStudentName = ""
     }
 }
 
 
 struct StudentsView_Previews: PreviewProvider {
     static var previews: some View {
-        // إنشاء بيانات وهمية للمعاينة
         let previewStore = AppDataStore()
         let section1 = Section(name: "الشعبة أ")
         let section2 = Section(name: "الشعبة ب")
