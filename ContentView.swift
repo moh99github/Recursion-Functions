@@ -17,6 +17,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("الغياب", systemImage: "list.bullet.clipboard")
                 }
+
+            StatisticsView()
+                .tabItem {
+                    Label("الإحصائيات", systemImage: "chart.pie")
+                }
         }
         // يضمن أن الواجهة تعمل بشكل جيد مع اللغة العربية
         .environment(\.layoutDirection, .rightToLeft)
